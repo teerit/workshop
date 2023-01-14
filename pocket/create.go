@@ -17,7 +17,7 @@ func (h *handler) CreatePocket(c echo.Context) error {
 	logger := mlog.L(c)
 	ctx := c.Request().Context()
 
-	var pk pocket
+	var pk Pocket
 	err := c.Bind(&pk)
 
 	if err != nil {

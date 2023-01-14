@@ -2,9 +2,10 @@ package pocket
 
 import (
 	"database/sql"
-	"github.com/labstack/echo/v4"
 	"log"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
 )
 
 type transferDto struct {
@@ -15,15 +16,15 @@ type transferDto struct {
 }
 type transferResponse struct {
 	TransactionId          int     `json:"transaction_id"`
-	SourceCloudPocket      *pocket `json:"source_cloud_pocket"`
-	DestinationCloudPocket *pocket `json:"destination_cloud_pocket"`
+	SourceCloudPocket      *Pocket `json:"source_cloud_pocket"`
+	DestinationCloudPocket *Pocket `json:"destination_cloud_pocket"`
 	Status                 string  `json:"status"`
 }
 
 func (p *handler) Transfer(c echo.Context) error {
 	model := &transferDto{}
-	sourcePocket := &pocket{}
-	descPocket := &pocket{}
+	sourcePocket := &Pocket{}
+	descPocket := &Pocket{}
 
 	err := c.Bind(model)
 	if err != nil {
@@ -102,7 +103,7 @@ func (p *handler) Transfer(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
-func findPocket(db *sql.DB, pid string, pk *pocket) error {
+func findPocket(db *sql.DB, pid string, pk *Pocket) error {
 	row := db.QueryRow(
 		"SELECT * FROM pockets where id=$1",
 		pid,

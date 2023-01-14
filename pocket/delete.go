@@ -25,7 +25,7 @@ func (h handler) Delete(c echo.Context) error {
 
 	if err != nil {
 		logger.Error("bad request body", zap.Error(err))
-		return echo.NewHTTPError(http.StatusBadRequest, "bad request body", err.Error())
+		return c.JSON(http.StatusBadRequest, Err{Message: "bad request body"})
 	}
 
 	rows := h.db.QueryRow(cqStmt, id)
@@ -36,8 +36,8 @@ func (h handler) Delete(c echo.Context) error {
 	}
 
 	if p.Balance > 0 {
-		return echo.NewHTTPError(http.StatusBadRequest,
-			"Unable to delete this Cloud Pocket\n there is amount left in this Cloud Pocket, please move money out and try again", nil)
+		return c.JSON(http.StatusBadRequest,
+			Err{Message: "Unable to delete this Cloud Pocket\n there is amount left in this Cloud Pocket, please move money out and try again"})
 	}
 
 	var lastInsertId int64

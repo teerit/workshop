@@ -27,7 +27,7 @@ func TestGetAllCloudPocketsIT(t *testing.T) {
 	teardown := setup(t)
 	defer teardown()
 	seedPocket(t)
-	var cpk []pocket
+	var cpk []Pocket
 	res := request(t, http.MethodGet, uri("cloud-pockets"), nil)
 	err := res.Decode(&cpk)
 
@@ -40,7 +40,7 @@ func TestGetCloudPocketByIDIT(t *testing.T) {
 	teardown := setup(t)
 	defer teardown()
 	c := seedPocket(t)
-	var cpk pocket
+	var cpk Pocket
 	res := request(t, http.MethodGet, uri("cloud-pockets", strconv.Itoa(int(c.ID))), nil)
 	err := res.Decode(&cpk)
 
@@ -79,8 +79,8 @@ func setup(t *testing.T) func() {
 	return teardown
 }
 
-func seedPocket(t *testing.T) pocket {
-	var cpk pocket
+func seedPocket(t *testing.T) Pocket {
+	var cpk Pocket
 	body := bytes.NewBufferString(`{"name":"Travel Fund","category":"Vacation","currency":"THB","balance":100.0}`)
 
 	err := request(t, http.MethodPost, uri("cloud-pockets"), body).Decode(&cpk)

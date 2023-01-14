@@ -4,8 +4,6 @@ import (
 	"database/sql"
 	"net/http"
 
-	"github.com/kkgo-software-engineering/workshop/pocket"
-
 	"github.com/kkgo-software-engineering/workshop/account"
 	"github.com/kkgo-software-engineering/workshop/config"
 	"github.com/kkgo-software-engineering/workshop/featflag"

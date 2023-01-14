@@ -2,10 +2,11 @@ package pocket
 
 import (
 	"database/sql"
+
 	"github.com/kkgo-software-engineering/workshop/config"
 )
 
-type pocket struct {
+type Pocket struct {
 	ID       int64   `json:"id"`
 	Name     string  `json:"name"`
 	Category string  `json:"category"`

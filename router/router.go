@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/kkgo-software-engineering/workshop/account"
+	"github.com/kkgo-software-engineering/workshop/cloudpocket"
 	"github.com/kkgo-software-engineering/workshop/config"
 	"github.com/kkgo-software-engineering/workshop/featflag"
 	"github.com/kkgo-software-engineering/workshop/healthchk"
@@ -29,6 +30,9 @@ func RegRoute(cfg config.Config, logger *zap.Logger, db *sql.DB) *echo.Echo {
 
 	hAccount := account.New(cfg.FeatureFlag, db)
 	e.POST("/accounts", hAccount.Create)
+
+	cloudpocketDelete := cloudpocket.New(cfg.FeatureFlag, db)
+	e.DELETE("/cloud-pocket/:id", cloudpocketDelete.Delete)
 
 	hFeatFlag := featflag.New(cfg)
 	e.GET("/features", hFeatFlag.List)

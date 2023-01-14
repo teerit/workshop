@@ -2,8 +2,9 @@ package router
 
 import (
 	"database/sql"
-	"github.com/kkgo-software-engineering/workshop/pocket"
 	"net/http"
+
+	"github.com/kkgo-software-engineering/workshop/pocket"
 
 	"github.com/kkgo-software-engineering/workshop/account"
 	"github.com/kkgo-software-engineering/workshop/config"
@@ -30,6 +31,8 @@ func RegRoute(cfg config.Config, logger *zap.Logger, db *sql.DB) *echo.Echo {
 	hPocket := pocket.New(cfg.FeatureFlag, db)
 	e.POST("/accounts", hAccount.Create)
 	e.POST("/cloud-pockets/transfer", hPocket.Transfer)
+	e.GET("/cloud-pockets", hPocket.GetAllCloudPocket)
+	e.GET("/cloud-pockets/:id", hPocket.GetCloudPocketByID)
 
 	hFeatFlag := featflag.New(cfg)
 	e.GET("/features", hFeatFlag.List)

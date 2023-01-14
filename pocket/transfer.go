@@ -1,16 +1,10 @@
 package pocket
 
 import (
-	"database/sql"
 	"net/http"
 
-	"github.com/kkgo-software-engineering/workshop/config"
 	"github.com/labstack/echo/v4"
 )
-
-func New(cfgFlag config.FeatureFlag, db *sql.DB) *handler {
-	return &handler{cfgFlag, db}
-}
 
 func (p *handler) Transfer(c echo.Context) error {
 

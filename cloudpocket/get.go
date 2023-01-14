@@ -5,7 +5,7 @@ import "github.com/labstack/echo/v4"
 type Cloudpockets struct {
 	ID       int     `json:"id"`
 	NAME     string  `json:"name"`
-	CATAGORY string  `json:"catagory`
+	CATAGORY string  `json:"catagory"`
 	CURRENCY string  `json:"currency"`
 	BALANCE  float64 `json:"balance"`
 }
@@ -13,19 +13,19 @@ type Cloudpockets struct {
 func GetAllCloudPocket(c echo.Context) error {
 	dumpData := []Cloudpockets{
 		{
-			"id":       "12345",
-			"name":     "Travel Fund",
-			"category": "Vacation",
-			"currency": "THB",
-			"balance":  100,
+			ID:       12345,
+			NAME:     "Travel Fund",
+			CATAGORY: "Vacation",
+			CURRENCY: "THB",
+			BALANCE:  100,
 		},
 		{
-			"id":       "67890",
-			"name":     "Savings",
-			"category": "Emergency Fund",
-			"currency": "THB",
-			"balance":  200,
-		}
+			ID:       67890,
+			NAME:     "Savings",
+			CATAGORY: "Emergency Fund",
+			CURRENCY: "THB",
+			BALANCE:  200,
+		},
 	}
 
 	return c.JSON(200, dumpData)

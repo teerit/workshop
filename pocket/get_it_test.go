@@ -5,32 +5,64 @@ package pocket
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kkgo-software-engineering/workshop/config"
 )
 
 func TestGetAllCloudPocketsIT(t *testing.T) {
+	teardown := setup(t)
+	defer teardown()
+	seedPocket(t)
+	var cpk []pocket
+	res := request(t, http.MethodGet, uri("cloud-pockets"), nil)
+	err := res.Decode(&cpk)
 
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Greater(t, len(cpk), 0)
+}
+
+func TestGetCloudPocketByIDIT(t *testing.T) {
+	teardown := setup(t)
+	defer teardown()
+	c := seedPocket(t)
+	var cpk pocket
+	res := request(t, http.MethodGet, uri("cloud-pockets", strconv.Itoa(int(c.ID))), nil)
+	err := res.Decode(&cpk)
+
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
 }
 
 func setup(t *testing.T) func() {
 	e := echo.New()
-	// router.RegRoute(h)
+	cfg := config.New().All()
+	sql, _ := sql.Open("postgres", cfg.DBConnection)
+	cfgFlag := config.FeatureFlag{}
+	h := New(cfgFlag, sql)
+	e.GET("/cloud-pockets", h.GetAllCloudPocket)
+	e.GET("/cloud-pockets/:id", h.GetCloudPocketByID)
+	e.POST("/cloud-pockets", h.CreatePocket)
+	addr := fmt.Sprintf("%s:%d", cfg.Server.Hostname, cfg.Server.Port)
 	go func() {
-		e.Start(os.Getenv("PORT"))
+		e.Start(addr)
 	}()
 	for {
-		conn, _ := net.DialTimeout("tcp", fmt.Sprint("localhost", os.Getenv("PORT")), 30*time.Second)
+		conn, _ := net.DialTimeout("tcp", fmt.Sprint("localhost:", os.Getenv("PORT")), 30*time.Second)
 		if conn != nil {
 			conn.Close()
 			break
@@ -47,24 +79,19 @@ func setup(t *testing.T) func() {
 	return teardown
 }
 
-func seedExpense(t *testing.T) pocket {
+func seedPocket(t *testing.T) pocket {
 	var cpk pocket
-	body := bytes.NewBufferString(`{
-		"title": "strawberry smoothie",
-		"amount": 79,
-		"note": "night market promotion discount 10 bath", 
-		"tags": ["food", "beverage"]
-	}`)
+	body := bytes.NewBufferString(`{"name":"Travel Fund","category":"Vacation","currency":"THB","balance":100.0}`)
 
 	err := request(t, http.MethodPost, uri("cloud-pockets"), body).Decode(&cpk)
 	if err != nil {
-		t.Fatal("can't create expense:", err)
+		t.Fatal("can't create cloud pocket:", err)
 	}
 	return cpk
 }
 
 func uri(paths ...string) string {
-	host := fmt.Sprint("http://localhost", os.Getenv("PORT"))
+	host := fmt.Sprint("http://localhost:", os.Getenv("PORT"))
 	if paths == nil {
 		return host
 	}

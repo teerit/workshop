@@ -2,7 +2,7 @@ install:
 	go mod tidy
 
 dev:
-	go run main.go
+	DB_CONNECTION=postgresql://group-2:group-2-pass@database-1.c7bdavepehea.ap-southeast-1.rds.amazonaws.com/group-2-dev PORT=2565 go run main.go
 
 test: test-unit test-integration test-e2e
 

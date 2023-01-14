@@ -51,5 +51,5 @@ func (h handler) Delete(c echo.Context) error {
 	}
 
 	logger.Info("delete successfully", zap.Int64("id", lastInsertId))
-	return c.JSON(http.StatusAccepted, "Cloud pocket deleted successfully")
+	return c.JSON(http.StatusAccepted, Err{Message: "Cloud pocket deleted successfully"})
 }

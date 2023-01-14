@@ -19,6 +19,10 @@ type handler struct {
 	db  *sql.DB
 }
 
+type Err struct {
+	Message string `json:"message"`
+}
+
 func New(cfgFlag config.FeatureFlag, db *sql.DB) *handler {
 	return &handler{cfgFlag, db}
 }

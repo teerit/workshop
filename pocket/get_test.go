@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var dumpData = []pocket{
+var dumpData = []Pocket{
 	{
 		ID:       12345,
 		Name:     "Travel Fund",

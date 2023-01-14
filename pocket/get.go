@@ -18,9 +18,9 @@ func (h *handler) GetAllCloudPocket(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, Err{Message: "Can't query all cloud pockets"})
 	}
 
-	pockets := []pocket{}
+	pockets := []Pocket{}
 	for rows.Next() {
-		var cpk pocket
+		var cpk Pocket
 		err = rows.Scan(&cpk.ID, &cpk.Name, &cpk.Category, &cpk.Currency, &cpk.Balance)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, Err{Message: "Can't scan cloud pocket"})
@@ -37,7 +37,7 @@ func (h *handler) GetCloudPocketByID(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, Err{Message: "Can't prepare query cloud pocket statment"})
 	}
 	row := stmt.QueryRow(id)
-	cpk := pocket{}
+	cpk := Pocket{}
 	err = row.Scan(&cpk.ID, &cpk.Name, &cpk.Category, &cpk.Currency, &cpk.Balance)
 	switch err {
 	case sql.ErrNoRows:

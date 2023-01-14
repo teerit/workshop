@@ -15,16 +15,12 @@ type Pocket struct {
 }
 
 type Err struct {
-	Message string
+	Message string `json:"message"`
 }
 
 type handler struct {
 	cfg config.FeatureFlag
 	db  *sql.DB
-}
-
-type Err struct {
-	Message string `json:"message"`
 }
 
 func New(cfgFlag config.FeatureFlag, db *sql.DB) *handler {

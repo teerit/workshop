@@ -2,15 +2,14 @@ package router
 
 import (
 	"database/sql"
-	"github.com/kkgo-software-engineering/workshop/pocket"
 	"net/http"
 
 	"github.com/kkgo-software-engineering/workshop/account"
-	"github.com/kkgo-software-engineering/workshop/cloudpocket"
 	"github.com/kkgo-software-engineering/workshop/config"
 	"github.com/kkgo-software-engineering/workshop/featflag"
 	"github.com/kkgo-software-engineering/workshop/healthchk"
 	"github.com/kkgo-software-engineering/workshop/mlog"
+	"github.com/kkgo-software-engineering/workshop/pocket"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
@@ -32,8 +31,8 @@ func RegRoute(cfg config.Config, logger *zap.Logger, db *sql.DB) *echo.Echo {
 	e.POST("/accounts", hAccount.Create)
 	e.POST("/cloud-pockets/transfer", hPocket.Transfer)
 
-	cloudpocketDelete := cloudpocket.New(cfg.FeatureFlag, db)
-	e.DELETE("/cloud-pocket/:id", cloudpocketDelete.Delete)
+	pocketDelete := pocket.New(cfg.FeatureFlag, db)
+	e.DELETE("/cloud-pocket/:id", pocketDelete.Delete)
 
 	hFeatFlag := featflag.New(cfg)
 	e.GET("/features", hFeatFlag.List)

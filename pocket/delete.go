@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	cStmt = "delete tb where id = $1 RETURNING id;"
+	cStmt = "delete pockets where id = $1 RETURNING id;"
 )
 
 func (h handler) Delete(c echo.Context) error {

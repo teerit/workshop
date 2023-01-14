@@ -6,10 +6,12 @@ import (
 	"github.com/kkgo-software-engineering/workshop/mlog"
 	echo "github.com/labstack/echo/v4"
 	"go.uber.org/zap"
+
+	_ "github.com/lib/pq"
 )
 
 const (
-	cStmt = "delete pockets where id = $1 RETURNING id;"
+	cStmt = "delete from pockets where id = $1 RETURNING id;"
 )
 
 func (h handler) Delete(c echo.Context) error {

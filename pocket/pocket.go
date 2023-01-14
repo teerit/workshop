@@ -14,6 +14,10 @@ type Pocket struct {
 	Balance  float64 `json:"balance"`
 }
 
+type Err struct {
+	Message string
+}
+
 type handler struct {
 	cfg config.FeatureFlag
 	db  *sql.DB

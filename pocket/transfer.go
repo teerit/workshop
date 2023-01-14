@@ -1,12 +1,10 @@
 package pocket
 
 import (
-	"github.com/labstack/echo/v4"
 	"net/http"
-)
 
-type transfer struct {
-}
+	"github.com/labstack/echo/v4"
+)
 
 func (p *handler) Transfer(c echo.Context) error {
 

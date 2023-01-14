@@ -19,3 +19,18 @@ func TestGetAllCloudPocket(t *testing.T) {
 		assert.Equal(t, http.StatusOK, res.Code)
 	}
 }
+
+func TestGetCloudPocketByID(t *testing.T) {
+	cpkID := "12345"
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/cloud-pockets", nil)
+	res := httptest.NewRecorder()
+	c := e.NewContext(req, res)
+	c.SetPath("/:id")
+	c.SetParamNames("id")
+	c.SetParamValues(cpkID)
+
+	if assert.NoError(t, GetCloudPocketByID(c)) {
+		assert.Equal(t, http.StatusOK, res.Code)
+	}
+}

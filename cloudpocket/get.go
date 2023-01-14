@@ -30,3 +30,8 @@ func GetAllCloudPocket(c echo.Context) error {
 
 	return c.JSON(200, dumpData)
 }
+
+func GetCloudPocketByID(c echo.Context) error {
+
+	return nil
+}

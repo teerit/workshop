@@ -2,6 +2,7 @@ package pocket
 
 import (
 	"database/sql"
+
 	"github.com/kkgo-software-engineering/workshop/config"
 )
 
@@ -16,6 +17,10 @@ type pocket struct {
 type handler struct {
 	cfg config.FeatureFlag
 	db  *sql.DB
+}
+
+type Err struct {
+	Message string `json:"message"`
 }
 
 func New(cfgFlag config.FeatureFlag, db *sql.DB) *handler {

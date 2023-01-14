@@ -34,3 +34,29 @@ func TestDeleteCloudPocketNotFound(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, res.Code)
 	}
 }
+
+func TestDeleteCloudPocketBalanceNotEqualsZero(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+
+	mockRows := sqlmock.NewRows([]string{"id", "name", "category", "currency", "balance"}).
+		AddRow(1, "Test Pocket", "Saving", "THB", 12)
+
+	mock.ExpectQuery("select id, name, category, currency, balance from pockets where id = \\$1").WithArgs(sqlmock.AnyArg()).WillReturnRows(mockRows)
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodDelete, "/cloud-pocket", nil)
+	res := httptest.NewRecorder()
+
+	c := e.NewContext(req, res)
+	c.SetPath("/:id")
+	c.SetParamNames("id")
+	c.SetParamValues("1")
+	h := &handler{db: db}
+	h.Delete(c)
+
+	if assert.NoError(t, err) {
+		assert.Equal(t, http.StatusBadRequest, res.Code)
+	}
+}

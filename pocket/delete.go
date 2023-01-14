@@ -1,7 +1,6 @@
 package pocket
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/kkgo-software-engineering/workshop/mlog"
@@ -12,8 +11,8 @@ import (
 )
 
 const (
-	cStmt  = "delete from pockets where id = $1 RETURNING id;"
-	cqStmt = "select * from pockets where id = $1"
+	dStmt = "delete from pockets where id = $1 RETURNING id;"
+	sStmt = "select id, name, category, currency, balance from pockets where id = $1"
 )
 
 func (h handler) Delete(c echo.Context) error {
@@ -28,10 +27,9 @@ func (h handler) Delete(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, Err{Message: "bad request body"})
 	}
 
-	rows := h.db.QueryRow(cqStmt, id)
+	rows := h.db.QueryRow(sStmt, id)
 	err = rows.Scan(&p.ID, &p.Name, &p.Category, &p.Currency, &p.Balance)
 	if err != nil {
-		fmt.Println("Not Found!!")
 		return c.JSON(http.StatusNotFound, Err{Message: "Cloud pocket not found"})
 	}
 
@@ -41,7 +39,7 @@ func (h handler) Delete(c echo.Context) error {
 	}
 
 	var lastInsertId int64
-	err = h.db.QueryRowContext(ctx, cStmt, id).Scan(&lastInsertId)
+	err = h.db.QueryRowContext(ctx, dStmt, id).Scan(&lastInsertId)
 	if err != nil {
 		logger.Error("delete row error", zap.Error(err))
 		return err

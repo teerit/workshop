@@ -15,7 +15,7 @@ const (
 	sStmt = "select id, name, category, currency, balance from pockets where id = $1"
 )
 
-func (h handler) DeleteById(c echo.Context) error {
+func (h handler) DeleteCloudPocketById(c echo.Context) error {
 	logger := mlog.L(c)
 	ctx := c.Request().Context()
 	id := c.Param("id")

@@ -28,7 +28,7 @@ func TestDeleteCloudPocketNotFound(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues("1")
 	h := &handler{db: db}
-	h.DeleteById(c)
+	h.DeleteCloudPocketById(c)
 
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusNotFound, res.Code)
@@ -54,7 +54,7 @@ func TestDeleteCloudPocketBalanceNotEqualsZero(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues("1")
 	h := &handler{db: db}
-	h.DeleteById(c)
+	h.DeleteCloudPocketById(c)
 
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusBadRequest, res.Code)
@@ -82,7 +82,7 @@ func TestDeleteCloudPocketSuccess(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues("1")
 	h := &handler{db: db}
-	h.DeleteById(c)
+	h.DeleteCloudPocketById(c)
 
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusAccepted, res.Code)

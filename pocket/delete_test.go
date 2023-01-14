@@ -70,7 +70,9 @@ func TestDeleteCloudPocketSuccess(t *testing.T) {
 	mockRows := sqlmock.NewRows([]string{"id", "name", "category", "currency", "balance"}).
 		AddRow(1, "Test Pocket", "Saving", "THB", 0)
 
+	mockRowsToDeleted := sqlmock.NewRows([]string{"id"}).AddRow(1)
 	mock.ExpectQuery("select id, name, category, currency, balance from pockets where id = \\$1").WithArgs(sqlmock.AnyArg()).WillReturnRows(mockRows)
+	mock.ExpectQuery("delete from pockets where id = \\$1 RETURNING id").WithArgs(sqlmock.AnyArg()).WillReturnRows(mockRowsToDeleted)
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodDelete, "/cloud-pocket", nil)
 	res := httptest.NewRecorder()

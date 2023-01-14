@@ -42,7 +42,7 @@ func (h handler) DeleteById(c echo.Context) error {
 	err = h.db.QueryRowContext(ctx, dStmt, id).Scan(&lastInsertId)
 	if err != nil {
 		logger.Error("delete row error", zap.Error(err))
-		return err
+		return c.JSON(http.StatusInternalServerError, Err{Message: "Unable to delete cloud pocket"})
 	}
 
 	logger.Info("delete successfully", zap.Int64("id", lastInsertId))

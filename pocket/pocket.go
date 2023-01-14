@@ -2,7 +2,6 @@ package pocket
 
 import (
 	"database/sql"
-
 	"github.com/kkgo-software-engineering/workshop/config"
 )
 
@@ -14,8 +13,9 @@ type pocket struct {
 	Balance  float64 `json:"balance"`
 }
 
-type Err struct {
-	Message string
+type errorResp struct {
+	ErrorMessage string `json:"error_message"`
+	Status       string `json:"status"`
 }
 
 type handler struct {

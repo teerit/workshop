@@ -1,11 +1,15 @@
 package pocket
 
 import (
-	"github.com/labstack/echo/v4"
+	"database/sql"
 	"net/http"
+
+	"github.com/kkgo-software-engineering/workshop/config"
+	"github.com/labstack/echo/v4"
 )
 
-type transfer struct {
+func New(cfgFlag config.FeatureFlag, db *sql.DB) *handler {
+	return &handler{cfgFlag, db}
 }
 
 func (p *handler) Transfer(c echo.Context) error {

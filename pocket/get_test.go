@@ -30,7 +30,7 @@ var dumpData = []Pocket{
 
 func TestGetAllCloudPocket(t *testing.T) {
 	db, mock, _ := sqlmock.New()
-	mockSql := "SELECT id, name, catagory, currency, balance FROM pockets"
+	mockSql := "SELECT id, name, category, currency, balance FROM pockets"
 	mockRow := sqlmock.NewRows([]string{"id", "name", "catagory", "currency", "balance"}).
 		AddRow(dumpData[0].ID, dumpData[0].Name, dumpData[0].Category, dumpData[0].Currency, dumpData[0].Balance).
 		AddRow(dumpData[1].ID, dumpData[1].Name, dumpData[1].Category, dumpData[1].Currency, dumpData[1].Balance)
@@ -49,7 +49,7 @@ func TestGetAllCloudPocket(t *testing.T) {
 
 func TestGetCloudPocketByID(t *testing.T) {
 	db, mock, _ := sqlmock.New()
-	mockSql := "SELECT id, name, catagory, currency, balance FROM pockets WHERE id = $1"
+	mockSql := "SELECT id, name, category, currency, balance FROM pockets WHERE id = $1"
 	mockRow := sqlmock.NewRows([]string{"id", "name", "catagory", "currency", "balance"}).
 		AddRow(dumpData[0].ID, dumpData[0].Name, dumpData[0].Category, dumpData[0].Currency, dumpData[0].Balance)
 	mock.ExpectPrepare(regexp.QuoteMeta(mockSql)).ExpectQuery().WillReturnRows(mockRow)

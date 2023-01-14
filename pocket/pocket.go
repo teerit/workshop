@@ -18,6 +18,11 @@ type Err struct {
 	Message string `json:"message"`
 }
 
+type errorResp struct {
+	ErrorMessage string `json:"error_message"`
+	Status       string `json:"status"`
+}
+
 type handler struct {
 	cfg config.FeatureFlag
 	db  *sql.DB

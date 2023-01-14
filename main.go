@@ -69,8 +69,25 @@ func initTable(db *sql.DB) error {
 				category TEXT,
 				currency TEXT,
 				balance float8
-			);`
+			);
+`
+	createTransaction := `
+		CREATE TABLE IF NOT EXISTS transactions(
+			id SERIAL PRIMARY KEY,
+			source_pid INT,
+			dest_pid INT,
+			amount float8,
+			description TEXT,
+			date timestamp,
+			status TEXT
+		);
+`
 	_, err := db.Exec(createTb)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(createTransaction)
 	if err != nil {
 		return err
 	}

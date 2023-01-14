@@ -4,18 +4,24 @@ import (
 	"database/sql"
 	"net/http"
 
+	"github.com/kkgo-software-engineering/workshop/mlog"
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 )
 
 func (h *handler) GetAllCloudPocket(c echo.Context) error {
-	stmt, err := h.db.Prepare("SELECT id, name, catagory, currency, balance FROM pockets")
+	logger := mlog.L(c)
+	stmt, err := h.db.Prepare("SELECT id, name, category, currency, balance FROM pockets")
+	defer logger.Sync()
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, Err{Message: "Can't prepare query all cloud pockets statment"})
+		logger.Error("Can't prepare query all cloud pockets statment", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, errorResp{ErrorMessage: "Can't prepare query all cloud pockets statment"})
 	}
 
 	rows, err := stmt.Query()
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, Err{Message: "Can't query all cloud pockets"})
+		logger.Error("Can't query all cloud pockets", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, errorResp{ErrorMessage: "Can't query all cloud pockets"})
 	}
 
 	pockets := []Pocket{}
@@ -23,7 +29,8 @@ func (h *handler) GetAllCloudPocket(c echo.Context) error {
 		var cpk Pocket
 		err = rows.Scan(&cpk.ID, &cpk.Name, &cpk.Category, &cpk.Currency, &cpk.Balance)
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, Err{Message: "Can't scan cloud pocket"})
+			logger.Error("Can't scan cloud pocket", zap.Error(err))
+			return c.JSON(http.StatusInternalServerError, errorResp{ErrorMessage: "Can't scan cloud pocket"})
 		}
 		pockets = append(pockets, cpk)
 	}
@@ -31,20 +38,25 @@ func (h *handler) GetAllCloudPocket(c echo.Context) error {
 }
 
 func (h *handler) GetCloudPocketByID(c echo.Context) error {
+	logger := mlog.L(c)
 	id := c.Param("id")
-	stmt, err := h.db.Prepare("SELECT id, name, catagory, currency, balance FROM pockets WHERE id = $1")
+	stmt, err := h.db.Prepare("SELECT id, name, category, currency, balance FROM pockets WHERE id = $1")
+	defer logger.Sync()
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, Err{Message: "Can't prepare query cloud pocket statment"})
+		logger.Error("Can't prepare query cloud pocket statment", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, errorResp{ErrorMessage: "Can't prepare query cloud pocket statment"})
 	}
 	row := stmt.QueryRow(id)
 	cpk := Pocket{}
 	err = row.Scan(&cpk.ID, &cpk.Name, &cpk.Category, &cpk.Currency, &cpk.Balance)
 	switch err {
 	case sql.ErrNoRows:
-		return c.JSON(http.StatusNoContent, Err{Message: "Cloud Pocket Data Not Found"})
+		logger.Error("Cloud Pocket Data Not Found", zap.Error(err))
+		return c.JSON(http.StatusNoContent, errorResp{ErrorMessage: "Cloud Pocket Data Not Found"})
 	case nil:
 		return c.JSON(http.StatusOK, cpk)
 	default:
-		return c.JSON(http.StatusInternalServerError, Err{Message: "Can't scan cloud pocket"})
+		logger.Error("Can't scan cloud pocket", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, errorResp{ErrorMessage: "Can't scan cloud pocket"})
 	}
 }

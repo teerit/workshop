@@ -1,6 +1,7 @@
 package pocket
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/kkgo-software-engineering/workshop/mlog"
@@ -27,15 +28,11 @@ func (h handler) Delete(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "bad request body", err.Error())
 	}
 
-	stmt, err := h.db.Prepare(cqStmt)
-	if err != nil {
-		logger.Error("can't prepare query statement", zap.Error(err))
-	}
-
-	rows := stmt.QueryRow(id)
+	rows := h.db.QueryRow(cqStmt, id)
 	err = rows.Scan(&p.ID, &p.Name, &p.Category, &p.Currency, &p.Balance)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Cloud pocket not found", err.Error())
+		fmt.Println("Not Found!!")
+		return c.JSON(http.StatusNotFound, Err{Message: "Cloud pocket not found"})
 	}
 
 	if p.Balance > 0 {

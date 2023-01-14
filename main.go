@@ -31,6 +31,11 @@ func main() {
 		logger.Fatal("unable to configure database", zap.Error(err))
 	}
 
+	err = initTable(sql)
+	if err != nil {
+		logger.Fatal("error init-db", zap.Error(err))
+	}
+
 	e := router.RegRoute(cfg, logger, sql)
 
 	addr := fmt.Sprintf("%s:%d", cfg.Server.Hostname, cfg.Server.Port)
@@ -54,4 +59,20 @@ func main() {
 	if err := e.Shutdown(ctx); err != nil {
 		logger.Fatal("unexpected shutdown the server", zap.Error(err))
 	}
+}
+
+func initTable(db *sql.DB) error {
+	createTb := `
+			CREATE TABLE IF NOT EXISTS pockets(
+				id SERIAL PRIMARY KEY,
+				name TEXT,
+				category TEXT,
+				currency TEXT,
+				balance float8
+			);`
+	_, err := db.Exec(createTb)
+	if err != nil {
+		return err
+	}
+	return nil
 }

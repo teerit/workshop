@@ -1,6 +1,7 @@
 package pocket
 
 import (
+	"database/sql"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -19,26 +20,31 @@ func (h *handler) GetAllCloudPocket(c echo.Context) error {
 
 	pockets := []pocket{}
 	for rows.Next() {
-		var pck pocket
-		err = rows.Scan(&pck.ID, &pck.Name, &pck.Category, &pck.Currency, &pck.Balance)
+		var cpk pocket
+		err = rows.Scan(&cpk.ID, &cpk.Name, &cpk.Category, &cpk.Currency, &cpk.Balance)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, Err{Message: "Can't scan cloud pocket"})
 		}
-		pockets = append(pockets, pck)
+		pockets = append(pockets, cpk)
 	}
 	return c.JSON(http.StatusOK, pockets)
 }
 
-func GetCloudPocketByID(c echo.Context) error {
-	// id := c.Param("id")
-	// stmt, err := db.
-	dumpData := pocket{
-		ID:       12345,
-		Name:     "Travel Fund",
-		Category: "Vacation",
-		Currency: "THB",
-		Balance:  100,
+func (h *handler) GetCloudPocketByID(c echo.Context) error {
+	id := c.Param("id")
+	stmt, err := h.db.Prepare("SELECT id, name, catagory, currency, balance FROM pockets WHERE id = $1")
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, Err{Message: "Can't prepare query cloud pocket statment"})
 	}
-
-	return c.JSON(http.StatusOK, dumpData)
+	row := stmt.QueryRow(id)
+	cpk := pocket{}
+	err = row.Scan(&cpk.ID, &cpk.Name, &cpk.Category, &cpk.Currency, &cpk.Balance)
+	switch err {
+	case sql.ErrNoRows:
+		return c.JSON(http.StatusNoContent, Err{Message: "Cloud Pocket Data Not Found"})
+	case nil:
+		return c.JSON(http.StatusOK, cpk)
+	default:
+		return c.JSON(http.StatusInternalServerError, Err{Message: "Can't scan cloud pocket"})
+	}
 }

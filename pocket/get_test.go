@@ -48,6 +48,12 @@ func TestGetAllCloudPocket(t *testing.T) {
 }
 
 func TestGetCloudPocketByID(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	mockSql := "SELECT id, name, catagory, currency, balance FROM pockets WHERE id = $1"
+	mockRow := sqlmock.NewRows([]string{"id", "name", "catagory", "currency", "balance"}).
+		AddRow(dumpData[0].ID, dumpData[0].Name, dumpData[0].Category, dumpData[0].Currency, dumpData[0].Balance)
+	mock.ExpectPrepare(regexp.QuoteMeta(mockSql)).ExpectQuery().WillReturnRows(mockRow)
+
 	cpkID := "12345"
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/cloud-pockets", nil)
@@ -57,7 +63,9 @@ func TestGetCloudPocketByID(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues(cpkID)
 
-	if assert.NoError(t, GetCloudPocketByID(c)) {
+	h := &handler{db: db}
+
+	if assert.NoError(t, h.GetCloudPocketByID(c)) {
 		assert.Equal(t, http.StatusOK, res.Code)
 	}
 }

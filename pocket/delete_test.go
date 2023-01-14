@@ -12,81 +12,63 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDeleteCloudPocketNotFound(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+func TestDeleteCloudPocketById(t *testing.T) {
+	tests := []struct {
+		name             string
+		pathParam        string
+		mockRows         *sqlmock.Rows
+		mockRowToDeleted *sqlmock.Rows
+		expectedStatus   int
+	}{
+		{
+			name:             "TestDeleteCloudPocketNotFound",
+			pathParam:        "1",
+			mockRows:         sqlmock.NewRows([]string{"id", "name", "category", "currency", "balance"}),
+			mockRowToDeleted: sqlmock.NewRows([]string{"id"}).AddRow(1),
+			expectedStatus:   http.StatusNotFound,
+		},
+		{
+			name:      "TestDeleteCloudPocketBalanceNotEqualsZero",
+			pathParam: "1",
+			mockRows: sqlmock.NewRows([]string{"id", "name", "category", "currency", "balance"}).
+				AddRow(1, "Test Pocket", "Saving", "THB", 12),
+			mockRowToDeleted: sqlmock.NewRows([]string{"id"}).AddRow(1),
+			expectedStatus:   http.StatusBadRequest,
+		},
+		{
+			name:      "TestDeleteCloudPocketSuccess",
+			pathParam: "1",
+			mockRows: sqlmock.NewRows([]string{"id", "name", "category", "currency", "balance"}).
+				AddRow(1, "Test Pocket", "Saving", "THB", 0),
+			mockRowToDeleted: sqlmock.NewRows([]string{"id"}).AddRow(1),
+			expectedStatus:   http.StatusAccepted,
+		},
 	}
 
-	mockRows := sqlmock.NewRows([]string{"id", "name", "category", "currency", "balance"})
-	mock.ExpectQuery("select * from pockets where id = \\$1").WillReturnRows(mockRows)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+			}
 
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodDelete, "/cloud-pocket", nil)
-	res := httptest.NewRecorder()
+			mock.ExpectQuery("select id, name, category, currency, balance from pockets where id = \\$1").WithArgs(sqlmock.AnyArg()).WillReturnRows(test.mockRows)
+			mock.ExpectQuery("delete from pockets where id = \\$1 RETURNING id").WithArgs(sqlmock.AnyArg()).WillReturnRows(test.mockRowToDeleted)
 
-	c := e.NewContext(req, res)
-	c.SetPath("/:id")
-	c.SetParamNames("id")
-	c.SetParamValues("1")
-	h := &handler{db: db}
-	h.DeleteCloudPocketById(c)
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodDelete, "/cloud-pocket", nil)
+			res := httptest.NewRecorder()
 
-	if assert.NoError(t, err) {
-		assert.Equal(t, http.StatusNotFound, res.Code)
-	}
-}
+			c := e.NewContext(req, res)
+			c.SetPath("/:id")
+			c.SetParamNames("id")
+			c.SetParamValues(test.pathParam)
+			h := &handler{db: db}
+			h.DeleteCloudPocketById(c)
 
-func TestDeleteCloudPocketBalanceNotEqualsZero(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-
-	mockRows := sqlmock.NewRows([]string{"id", "name", "category", "currency", "balance"}).
-		AddRow(1, "Test Pocket", "Saving", "THB", 12)
-
-	mock.ExpectQuery("select id, name, category, currency, balance from pockets where id = \\$1").WithArgs(sqlmock.AnyArg()).WillReturnRows(mockRows)
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodDelete, "/cloud-pocket", nil)
-	res := httptest.NewRecorder()
-
-	c := e.NewContext(req, res)
-	c.SetPath("/:id")
-	c.SetParamNames("id")
-	c.SetParamValues("1")
-	h := &handler{db: db}
-	h.DeleteCloudPocketById(c)
-
-	if assert.NoError(t, err) {
-		assert.Equal(t, http.StatusBadRequest, res.Code)
-	}
-}
-
-func TestDeleteCloudPocketSuccess(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-
-	mockRows := sqlmock.NewRows([]string{"id", "name", "category", "currency", "balance"}).
-		AddRow(1, "Test Pocket", "Saving", "THB", 0)
-
-	mockRowsToDeleted := sqlmock.NewRows([]string{"id"}).AddRow(1)
-	mock.ExpectQuery("select id, name, category, currency, balance from pockets where id = \\$1").WithArgs(sqlmock.AnyArg()).WillReturnRows(mockRows)
-	mock.ExpectQuery("delete from pockets where id = \\$1 RETURNING id").WithArgs(sqlmock.AnyArg()).WillReturnRows(mockRowsToDeleted)
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodDelete, "/cloud-pocket", nil)
-	res := httptest.NewRecorder()
-
-	c := e.NewContext(req, res)
-	c.SetPath("/:id")
-	c.SetParamNames("id")
-	c.SetParamValues("1")
-	h := &handler{db: db}
-	h.DeleteCloudPocketById(c)
-
-	if assert.NoError(t, err) {
-		assert.Equal(t, http.StatusAccepted, res.Code)
+			if assert.NoError(t, err) {
+				assert.Equal(t, test.expectedStatus, res.Code)
+			}
+		})
 	}
 }

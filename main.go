@@ -24,6 +24,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Println(cfg.DBConnection)
 
 	sql, err := sql.Open("postgres", cfg.DBConnection)
 	if err != nil {

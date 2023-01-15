@@ -2,10 +2,9 @@ package pocket
 
 import (
 	"database/sql"
+	"github.com/labstack/echo/v4"
 	"log"
 	"net/http"
-
-	"github.com/labstack/echo/v4"
 )
 
 type transferDto struct {
@@ -14,35 +13,39 @@ type transferDto struct {
 	Amount         float64 `json:"amount"`
 	Description    string  `json:"description"`
 }
+
 type transferResponse struct {
 	TransactionId          int     `json:"transaction_id"`
-	SourceCloudPocket      *Pocket `json:"source_cloud_pocket"`
-	DestinationCloudPocket *Pocket `json:"destination_cloud_pocket"`
+	SourceCloudPocket      *pocket `json:"source_cloud_pocket"`
+	DestinationCloudPocket *pocket `json:"destination_cloud_pocket"`
 	Status                 string  `json:"status"`
 }
 
-func (p *handler) Transfer(c echo.Context) error {
-	model := &transferDto{}
-	sourcePocket := &Pocket{}
-	descPocket := &Pocket{}
+func (h *handler) Transfer(c echo.Context) error {
+	tDto := &transferDto{}
+	sourcePocket := &pocket{}
+	destPocket := &pocket{}
 
-	err := c.Bind(model)
+	// bind dto
+	err := c.Bind(tDto)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, errorResp{
+			Status:       "Failed",
+			ErrorMessage: "Bad request",
+		})
+	}
+
+	// query and bind source pocket
+	err = findPocket(h.db, tDto.SourcePocketId, sourcePocket)
 	if err != nil {
 		log.Println(err)
-
-	}
-	log.Printf("%v", model)
-
-	// query source pocket
-	err = findPocket(p.db, model.SourcePocketId, sourcePocket)
-	if err != nil {
 		return c.JSON(http.StatusNotFound, errorResp{
 			Status:       "Failed",
 			ErrorMessage: "Not found source pocket",
 		})
 	}
-	// query destination pocket
-	err = findPocket(p.db, model.DestPocketId, descPocket)
+	// query and bind destination pocket
+	err = findPocket(h.db, tDto.DestPocketId, destPocket)
 	if err != nil {
 		return c.JSON(http.StatusNotFound, errorResp{
 			Status:       "Failed",
@@ -50,33 +53,29 @@ func (p *handler) Transfer(c echo.Context) error {
 		})
 	}
 
-	// check amount > source amount
-	if model.Amount > sourcePocket.Balance {
-		_, err := insertTransaction(p.db, model, "Failed")
+	if tDto.Amount > sourcePocket.Balance {
+		_, err := insertTransaction(h.db, tDto, "Failed")
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, errorResp{
 				Status:       "Failed",
 				ErrorMessage: "Internal server error",
 			})
 		}
-		return c.JSON(http.StatusNotFound, errorResp{
+		return c.JSON(http.StatusBadRequest, errorResp{
 			Status:       "Failed",
 			ErrorMessage: "Not enough balance in the source cloud pocket",
 		})
 	}
 
-	// update amount source and desc
-	sourcePocket.Balance = sourcePocket.Balance - model.Amount
-	descPocket.Balance = descPocket.Balance + model.Amount
-
-	err = updatePocket(p.db, sourcePocket.ID, sourcePocket.Balance)
+	// update amount source and destination
+	err = updatePocket(h.db, sourcePocket, sourcePocket.Balance-tDto.Amount)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, errorResp{
 			Status:       "Failed",
 			ErrorMessage: "Internal server error",
 		})
 	}
-	err = updatePocket(p.db, descPocket.ID, descPocket.Balance)
+	err = updatePocket(h.db, destPocket, destPocket.Balance+tDto.Amount)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, errorResp{
 			Status:       "Failed",
@@ -84,8 +83,7 @@ func (p *handler) Transfer(c echo.Context) error {
 		})
 	}
 
-	// insert transactions
-	tId, err := insertTransaction(p.db, model, "Success")
+	tId, err := insertTransaction(h.db, tDto, "Success")
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, errorResp{
 			Status:       "Failed",
@@ -96,14 +94,14 @@ func (p *handler) Transfer(c echo.Context) error {
 	resp := &transferResponse{
 		TransactionId:          tId,
 		SourceCloudPocket:      sourcePocket,
-		DestinationCloudPocket: descPocket,
+		DestinationCloudPocket: destPocket,
 		Status:                 "Success",
 	}
 
 	return c.JSON(http.StatusOK, resp)
 }
 
-func findPocket(db *sql.DB, pid string, pk *Pocket) error {
+func findPocket(db *sql.DB, pid string, pk *pocket) error {
 	row := db.QueryRow(
 		"SELECT * FROM pockets where id=$1",
 		pid,
@@ -115,42 +113,30 @@ func findPocket(db *sql.DB, pid string, pk *Pocket) error {
 		&pk.Currency,
 		&pk.Balance,
 	)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
-func insertTransaction(db *sql.DB, model *transferDto, status string) (int, error) {
+func insertTransaction(db *sql.DB, tDto *transferDto, status string) (int, error) {
 	row := db.QueryRow(
 		"INSERT INTO transactions (source_pid, dest_pid, amount, description, date, status) values ($1, $2, $3, $4, current_timestamp, $5)  RETURNING id",
-		model.SourcePocketId,
-		model.DestPocketId,
-		model.Amount,
-		model.Description,
+		tDto.SourcePocketId,
+		tDto.DestPocketId,
+		tDto.Amount,
+		tDto.Description,
 		status,
 	)
 
 	var resultId int
 	err := row.Scan(&resultId)
-	if err != nil {
-		log.Println(err)
-		return 0, err
-	}
-
-	return resultId, nil
+	return resultId, err
 }
 
-func updatePocket(db *sql.DB, pid int64, result float64) error {
-	stmt, err := db.Prepare("UPDATE pockets SET balance=$2 WHERE id=$1")
-	if err != nil {
-		return err
-	}
-
-	_, err = stmt.Exec(pid, result)
-	if err != nil {
-		return err
-	}
-
-	return nil
+func updatePocket(db *sql.DB, p *pocket, amount float64) error {
+	row := db.QueryRow(
+		"UPDATE pockets SET balance=$2 WHERE id=$1 RETURNING balance",
+		p.ID,
+		amount,
+	)
+	err := row.Scan(&p.Balance)
+	return err
 }

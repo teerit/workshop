@@ -49,6 +49,7 @@ func TestTransfer(t *testing.T) {
 			sqlFn: func() (*sql.DB, error) {
 				db, mock, _ := sqlmock.New()
 
+				mock.ExpectBegin()
 				// mock find
 				mockSqlFind := "SELECT (.+) FROM pockets"
 				newsMockRows := sqlmock.NewRows([]string{"id", "name", "category", "currency", "balance"}).
@@ -60,7 +61,6 @@ func TestTransfer(t *testing.T) {
 				mock.ExpectQuery(mockSqlFind).WithArgs("2").WillReturnRows(newsMockRows)
 
 				// mock update
-				mock.ExpectBegin()
 				mockSqlUpdate := "UPDATE pockets"
 				newsMockRows = sqlmock.NewRows([]string{"balance"}).
 					AddRow(950.0)
@@ -113,7 +113,9 @@ func TestTransfer(t *testing.T) {
 			name:    "should bind fail return bad request",
 			cfgFlag: config.FeatureFlag{},
 			sqlFn: func() (*sql.DB, error) {
-				return nil, nil
+				db, mock, _ := sqlmock.New()
+				mock.ExpectBegin()
+				return db, nil
 			},
 			payload: `{
 				"source_cloud_pocket_id": 1234,
@@ -131,7 +133,8 @@ func TestTransfer(t *testing.T) {
 			name:    "should find source pocket fail return not found",
 			cfgFlag: config.FeatureFlag{},
 			sqlFn: func() (*sql.DB, error) {
-				db, _, _ := sqlmock.New()
+				db, mock, _ := sqlmock.New()
+				mock.ExpectBegin()
 				return db, nil
 			},
 			payload: `{
@@ -151,6 +154,8 @@ func TestTransfer(t *testing.T) {
 			cfgFlag: config.FeatureFlag{},
 			sqlFn: func() (*sql.DB, error) {
 				db, mock, _ := sqlmock.New()
+
+				mock.ExpectBegin()
 				// mock find
 				mockSqlFind := "SELECT (.+) FROM pockets"
 				newsMockRows := sqlmock.NewRows([]string{"id", "name", "category", "currency", "balance"}).
@@ -176,6 +181,8 @@ func TestTransfer(t *testing.T) {
 			cfgFlag: config.FeatureFlag{},
 			sqlFn: func() (*sql.DB, error) {
 				db, mock, _ := sqlmock.New()
+
+				mock.ExpectBegin()
 				// mock find
 				mockSqlFind := "SELECT (.+) FROM pockets"
 				newsMockRows := sqlmock.NewRows([]string{"id", "name", "category", "currency", "balance"}).
@@ -205,6 +212,8 @@ func TestTransfer(t *testing.T) {
 			cfgFlag: config.FeatureFlag{},
 			sqlFn: func() (*sql.DB, error) {
 				db, mock, _ := sqlmock.New()
+
+				mock.ExpectBegin()
 				// mock find
 				mockSqlFind := "SELECT (.+) FROM pockets"
 				newsMockRows := sqlmock.NewRows([]string{"id", "name", "category", "currency", "balance"}).
@@ -241,6 +250,8 @@ func TestTransfer(t *testing.T) {
 			cfgFlag: config.FeatureFlag{},
 			sqlFn: func() (*sql.DB, error) {
 				db, mock, _ := sqlmock.New()
+
+				mock.ExpectBegin()
 				// mock find
 				mockSqlFind := "SELECT (.+) FROM pockets"
 				newsMockRows := sqlmock.NewRows([]string{"id", "name", "category", "currency", "balance"}).
@@ -271,6 +282,8 @@ func TestTransfer(t *testing.T) {
 			cfgFlag: config.FeatureFlag{},
 			sqlFn: func() (*sql.DB, error) {
 				db, mock, _ := sqlmock.New()
+
+				mock.ExpectBegin()
 				// mock find
 				mockSqlFind := "SELECT (.+) FROM pockets"
 				newsMockRows := sqlmock.NewRows([]string{"id", "name", "category", "currency", "balance"}).
@@ -282,7 +295,6 @@ func TestTransfer(t *testing.T) {
 				mock.ExpectQuery(mockSqlFind).WithArgs("2").WillReturnRows(newsMockRows)
 
 				// mock update
-				mock.ExpectBegin()
 				mockSqlUpdate := "UPDATE pockets"
 				newsMockRows = sqlmock.NewRows([]string{"balance"}).
 					AddRow(sourcePocket.Balance)
@@ -315,6 +327,8 @@ func TestTransfer(t *testing.T) {
 			cfgFlag: config.FeatureFlag{},
 			sqlFn: func() (*sql.DB, error) {
 				db, mock, _ := sqlmock.New()
+
+				mock.ExpectBegin()
 				// mock find
 				mockSqlFind := "SELECT (.+) FROM pockets"
 				newsMockRows := sqlmock.NewRows([]string{"id", "name", "category", "currency", "balance"}).
@@ -326,7 +340,6 @@ func TestTransfer(t *testing.T) {
 				mock.ExpectQuery(mockSqlFind).WithArgs("2").WillReturnRows(newsMockRows)
 
 				// mock update
-				mock.ExpectBegin()
 				mockSqlUpdate := "UPDATE pockets"
 				newsMockRows = sqlmock.NewRows([]string{"balance"}).
 					AddRow(sourcePocket.Balance)
@@ -356,16 +369,8 @@ func TestTransfer(t *testing.T) {
 			name:    "should return internal server when database begin fail",
 			cfgFlag: config.FeatureFlag{},
 			sqlFn: func() (*sql.DB, error) {
-				db, mock, _ := sqlmock.New()
-				// mock find
-				mockSqlFind := "SELECT (.+) FROM pockets"
-				newsMockRows := sqlmock.NewRows([]string{"id", "name", "category", "currency", "balance"}).
-					AddRow(sourcePocket.ID, sourcePocket.Name, sourcePocket.Category, sourcePocket.Currency, sourcePocket.Balance)
-				mock.ExpectQuery(mockSqlFind).WithArgs("1").WillReturnRows(newsMockRows)
 
-				newsMockRows = sqlmock.NewRows([]string{"id", "name", "category", "currency", "balance"}).
-					AddRow(destPocket.ID, destPocket.Name, destPocket.Category, destPocket.Currency, destPocket.Balance)
-				mock.ExpectQuery(mockSqlFind).WithArgs("2").WillReturnRows(newsMockRows)
+				db, _, _ := sqlmock.New()
 
 				return db, nil
 			},

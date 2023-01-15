@@ -13,6 +13,7 @@ import (
 	"net"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -99,6 +100,7 @@ func TestTransferPocketsToDeletePocketIt(t *testing.T) {
 	go func(e *echo.Echo) {
 		e.POST("/cloud-pockets", h.CreatePocket)
 		e.POST("/cloud-pockets/transfer", h.Transfer)
+		e.DELETE("/cloud-pocket/:id", h.DeleteCloudPocketById)
 		e.Start(":2565")
 	}(e)
 	for {
@@ -143,6 +145,9 @@ func TestTransferPocketsToDeletePocketIt(t *testing.T) {
 	assert.Equal(t, trfResp.DestinationCloudPocket.Balance, 200.0)
 	assert.Equal(t, trfResp.SourceCloudPocket.Balance, 0.0)
 
+	res = Request(http.MethodDelete, Uri("cloud-pocket", strconv.FormatUint(uint64(srcPocket.ID), 10)), nil)
+
+	assert.Equal(t, http.StatusAccepted, res.StatusCode)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	err = e.Shutdown(ctx)

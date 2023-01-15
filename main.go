@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/kkgo-software-engineering/workshop/config"
+	"github.com/kkgo-software-engineering/workshop/db"
 	"github.com/kkgo-software-engineering/workshop/router"
 	"go.uber.org/zap"
 
@@ -31,7 +32,7 @@ func main() {
 		logger.Fatal("unable to configure database", zap.Error(err))
 	}
 
-	err = initTable(sql)
+	err = db.InitDatabase(sql)
 	if err != nil {
 		logger.Fatal("error init-db", zap.Error(err))
 	}
@@ -59,37 +60,4 @@ func main() {
 	if err := e.Shutdown(ctx); err != nil {
 		logger.Fatal("unexpected shutdown the server", zap.Error(err))
 	}
-}
-
-func initTable(db *sql.DB) error {
-	createTb := `
-			CREATE TABLE IF NOT EXISTS pockets(
-				id SERIAL PRIMARY KEY,
-				name TEXT,
-				category TEXT,
-				currency TEXT,
-				balance float8
-			);
-`
-	createTransaction := `
-		CREATE TABLE IF NOT EXISTS transactions(
-			id SERIAL PRIMARY KEY,
-			source_pid INT,
-			dest_pid INT,
-			amount float8,
-			description TEXT,
-			date timestamp,
-			status TEXT
-		);
-`
-	_, err := db.Exec(createTb)
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(createTransaction)
-	if err != nil {
-		return err
-	}
-	return nil
 }

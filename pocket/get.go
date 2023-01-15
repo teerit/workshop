@@ -11,8 +11,8 @@ import (
 
 func (h *handler) GetAllCloudPocket(c echo.Context) error {
 	logger := mlog.L(c)
-	stmt, err := h.db.Prepare("SELECT id, name, category, currency, balance FROM pockets")
 	defer logger.Sync()
+	stmt, err := h.db.Prepare("SELECT id, name, category, currency, balance FROM pockets")
 	if err != nil {
 		logger.Error("Can't prepare query all cloud pockets statment", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, errorResp{ErrorMessage: "Can't prepare query all cloud pockets statment"})
@@ -39,9 +39,9 @@ func (h *handler) GetAllCloudPocket(c echo.Context) error {
 
 func (h *handler) GetCloudPocketByID(c echo.Context) error {
 	logger := mlog.L(c)
+	defer logger.Sync()
 	id := c.Param("id")
 	stmt, err := h.db.Prepare("SELECT id, name, category, currency, balance FROM pockets WHERE id = $1")
-	defer logger.Sync()
 	if err != nil {
 		logger.Error("Can't prepare query cloud pocket statment", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, errorResp{ErrorMessage: "Can't prepare query cloud pocket statment"})

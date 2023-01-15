@@ -5,16 +5,16 @@ package pocket
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
-	"github.com/kkgo-software-engineering/workshop/config"
-	"github.com/labstack/echo/v4"
-	_ "github.com/lib/pq"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/kkgo-software-engineering/workshop/config"
+	"github.com/labstack/echo/v4"
+	_ "github.com/lib/pq"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDeletePocketsByIdIT(t *testing.T) {

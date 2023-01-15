@@ -11,7 +11,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -48,6 +47,8 @@ func TestGetCloudPocketByIDIT(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 }
 
+var cfg = config.New().All()
+
 func setup(t *testing.T) func() {
 	e := echo.New()
 	cfg := config.New().All()
@@ -62,7 +63,7 @@ func setup(t *testing.T) func() {
 		e.Start(addr)
 	}()
 	for {
-		conn, _ := net.DialTimeout("tcp", fmt.Sprint("localhost:", os.Getenv("PORT")), 30*time.Second)
+		conn, _ := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", cfg.Server.Hostname, cfg.Server.Port), 30*time.Second)
 		if conn != nil {
 			conn.Close()
 			break
@@ -91,7 +92,7 @@ func seedPocket(t *testing.T) Pocket {
 }
 
 func uri(paths ...string) string {
-	host := fmt.Sprint("http://localhost:", os.Getenv("PORT"))
+	host := fmt.Sprintf("%s:%d", cfg.Server.Hostname, cfg.Server.Port)
 	if paths == nil {
 		return host
 	}

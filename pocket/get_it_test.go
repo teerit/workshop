@@ -58,12 +58,12 @@ func setup(t *testing.T) func() {
 	e.GET("/cloud-pockets", h.GetAllCloudPocket)
 	e.GET("/cloud-pockets/:id", h.GetCloudPocketByID)
 	e.POST("/cloud-pockets", h.CreatePocket)
-	addr := fmt.Sprintf("%s:%d", cfg.Server.Hostname, cfg.Server.Port)
+	addr := fmt.Sprintf("%s:%d", "localhost", cfg.Server.Port)
 	go func() {
 		e.Start(addr)
 	}()
 	for {
-		conn, _ := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", cfg.Server.Hostname, cfg.Server.Port), 30*time.Second)
+		conn, _ := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", "localhost", cfg.Server.Port), 30*time.Second)
 		if conn != nil {
 			conn.Close()
 			break
@@ -92,7 +92,7 @@ func seedPocket(t *testing.T) Pocket {
 }
 
 func uri(paths ...string) string {
-	host := fmt.Sprintf("%s:%d", cfg.Server.Hostname, cfg.Server.Port)
+	host := fmt.Sprintf("%s:%d", "http://localhost", cfg.Server.Port)
 	if paths == nil {
 		return host
 	}

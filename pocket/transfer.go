@@ -82,7 +82,7 @@ func (h *handler) Transfer(c echo.Context) error {
 	}
 
 	// update amount source and destination
-	err = tfService.updatePocket(sourcePocket, sourcePocket.Balance-tDto.Amount)
+	err = tfService.updatePocket(sourcePocket, Sub(sourcePocket.Balance, tDto.Amount))
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, errorResp{
 			Status:       "Failed",
@@ -90,7 +90,7 @@ func (h *handler) Transfer(c echo.Context) error {
 		})
 	}
 
-	err = tfService.updatePocket(destPocket, destPocket.Balance+tDto.Amount)
+	err = tfService.updatePocket(destPocket, Add(destPocket.Balance, tDto.Amount))
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, errorResp{
 			Status:       "Failed",

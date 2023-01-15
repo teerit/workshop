@@ -1,8 +1,10 @@
 package pocket
 
 import (
+	"fmt"
+	"github.com/kkgo-software-engineering/workshop/mlog"
 	"github.com/labstack/echo/v4"
-	"log"
+	"go.uber.org/zap"
 	"net/http"
 )
 
@@ -21,12 +23,12 @@ type transferResponse struct {
 }
 
 func (h *handler) Transfer(c echo.Context) error {
+	logger := mlog.L(c)
+	defer logger.Sync()
 	// init db and variable
-	tDto := &transferDto{}
-	sourcePocket := &Pocket{}
-	destPocket := &Pocket{}
 	db, err := h.db.Begin()
 	if err != nil {
+		logger.Error("bad request body", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, errorResp{
 			Status:       "Failed",
 			ErrorMessage: "Internal server error",
@@ -38,11 +40,15 @@ func (h *handler) Transfer(c echo.Context) error {
 		}
 		_ = db.Commit()
 	}()
-	tfService := newTransferService(db)
+	tfService := newTransferService(db, logger)
+	tDto := &transferDto{}
+	sourcePocket := &Pocket{}
+	destPocket := &Pocket{}
 
 	// bind dto
 	err = c.Bind(tDto)
 	if err != nil {
+		logger.Error("bad request body", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, errorResp{
 			Status:       "Failed",
 			ErrorMessage: "Bad request",
@@ -52,7 +58,7 @@ func (h *handler) Transfer(c echo.Context) error {
 	// query and bind source pocket
 	err = tfService.findPocket(tDto.SourcePocketId, sourcePocket)
 	if err != nil {
-		log.Println(err)
+		logger.Error("not found source pocket", zap.Error(err))
 		return c.JSON(http.StatusNotFound, errorResp{
 			Status:       "Failed",
 			ErrorMessage: "Not found source pocket",
@@ -61,6 +67,7 @@ func (h *handler) Transfer(c echo.Context) error {
 	// query and bind destination pocket
 	err = tfService.findPocket(tDto.DestPocketId, destPocket)
 	if err != nil {
+		logger.Error("not found destination pocket", zap.Error(err))
 		return c.JSON(http.StatusNotFound, errorResp{
 			Status:       "Failed",
 			ErrorMessage: "Not found destination pocket",
@@ -75,6 +82,7 @@ func (h *handler) Transfer(c echo.Context) error {
 		})
 	}
 	if isBalance {
+		logger.Error("bad request body", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, errorResp{
 			Status:       "Failed",
 			ErrorMessage: "Not enough balance in the source cloud pocket",
@@ -84,6 +92,7 @@ func (h *handler) Transfer(c echo.Context) error {
 	// update amount source and destination
 	err = tfService.updatePocket(sourcePocket, Sub(sourcePocket.Balance, tDto.Amount))
 	if err != nil {
+		logger.Error(fmt.Sprintf("update error pocket id: %v", sourcePocket.ID))
 		return c.JSON(http.StatusInternalServerError, errorResp{
 			Status:       "Failed",
 			ErrorMessage: "Internal server error",
@@ -92,6 +101,7 @@ func (h *handler) Transfer(c echo.Context) error {
 
 	err = tfService.updatePocket(destPocket, Add(destPocket.Balance, tDto.Amount))
 	if err != nil {
+		logger.Error(fmt.Sprintf("update error pocket id: %v", sourcePocket.ID))
 		return c.JSON(http.StatusInternalServerError, errorResp{
 			Status:       "Failed",
 			ErrorMessage: "Internal server error",
@@ -100,7 +110,7 @@ func (h *handler) Transfer(c echo.Context) error {
 
 	tId, err := tfService.insertTransaction(tDto, "Success")
 	if err != nil {
-		log.Println(err)
+		logger.Error(fmt.Sprintf("insert transaction error from pocket Id: %v", sourcePocket.ID))
 		return c.JSON(http.StatusInternalServerError, errorResp{
 			Status:       "Failed",
 			ErrorMessage: "Internal server error",

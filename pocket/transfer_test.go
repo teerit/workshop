@@ -32,7 +32,7 @@ var (
 	}
 )
 
-func TestTransferSuccess(t *testing.T) {
+func TestTransfer(t *testing.T) {
 	// Arrange
 
 	var transferTests = []struct {

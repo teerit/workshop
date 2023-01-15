@@ -68,14 +68,31 @@ func (h *handler) Transfer(c echo.Context) error {
 	}
 
 	// update amount source and destination
-	err = updatePocket(h.db, sourcePocket, sourcePocket.Balance-tDto.Amount)
+	begin, err := h.db.Begin()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, errorResp{
 			Status:       "Failed",
 			ErrorMessage: "Internal server error",
 		})
 	}
-	err = updatePocket(h.db, destPocket, destPocket.Balance+tDto.Amount)
+	defer func() {
+		switch err {
+		case nil:
+			err = begin.Commit()
+		default:
+			begin.Rollback()
+		}
+	}()
+
+	err = updatePocket(begin, sourcePocket, sourcePocket.Balance-tDto.Amount)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, errorResp{
+			Status:       "Failed",
+			ErrorMessage: "Internal server error",
+		})
+	}
+
+	err = updatePocket(begin, destPocket, destPocket.Balance+tDto.Amount)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, errorResp{
 			Status:       "Failed",
@@ -85,6 +102,7 @@ func (h *handler) Transfer(c echo.Context) error {
 
 	tId, err := insertTransaction(h.db, tDto, "Success")
 	if err != nil {
+		log.Println(err)
 		return c.JSON(http.StatusInternalServerError, errorResp{
 			Status:       "Failed",
 			ErrorMessage: "Internal server error",
@@ -131,7 +149,7 @@ func insertTransaction(db *sql.DB, tDto *transferDto, status string) (int, error
 	return resultId, err
 }
 
-func updatePocket(db *sql.DB, p *Pocket, amount float64) error {
+func updatePocket(db *sql.Tx, p *Pocket, amount float64) error {
 	row := db.QueryRow(
 		"UPDATE pockets SET balance=$2 WHERE id=$1 RETURNING balance",
 		p.ID,

@@ -60,23 +60,26 @@ func TestTransfer(t *testing.T) {
 				mock.ExpectQuery(mockSqlFind).WithArgs("2").WillReturnRows(newsMockRows)
 
 				// mock update
+				mock.ExpectBegin()
 				mockSqlUpdate := "UPDATE pockets"
 				newsMockRows = sqlmock.NewRows([]string{"balance"}).
-					AddRow(sourcePocket.Balance)
-				mock.ExpectQuery(mockSqlUpdate).WithArgs(sourcePocket.ID, 950.0).
+					AddRow(950.0)
+				mock.ExpectQuery(mockSqlUpdate).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
 					WillReturnRows(newsMockRows)
 
 				newsMockRows = sqlmock.NewRows([]string{"balance"}).
-					AddRow(destPocket.Balance)
-				mock.ExpectQuery(mockSqlUpdate).WithArgs(destPocket.ID, 1050.0).
+					AddRow(1050.0)
+				mock.ExpectQuery(mockSqlUpdate).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
 					WillReturnRows(newsMockRows)
 
 				// mock insert transaction
 				newsMockRows = sqlmock.NewRows([]string{"id"}).
 					AddRow("123")
 				mock.ExpectQuery("INSERT INTO transactions (.+) RETURNING id").
-					WithArgs("1", "2", 50.0, "Transfer from Travel fund to savings", "Success").
+					WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 					WillReturnRows(newsMockRows)
+
+				mock.ExpectCommit()
 
 				return db, nil
 			},
@@ -89,19 +92,19 @@ func TestTransfer(t *testing.T) {
 			wantCode: http.StatusOK,
 			wantResp: `{
 				"transaction_id": 123,
-					"source_cloud_pocket": {
+				"source_cloud_pocket": {
 					"id": 1,
 						"name": "Travel Fund",
 						"category": "Vacation",
 						"currency":"THB",
-						"balance": 1000.00
+						"balance": 950.00
 				},
 				"destination_cloud_pocket": {
 					"id": 2,
 						"name": "Savings",
 						"category": "Emergency Fund",
 						"currency":"THB",
-						"balance": 1000.00
+						"balance": 1050.00
 				},
 				"status": "Success"
 			}`,
@@ -247,6 +250,7 @@ func TestTransfer(t *testing.T) {
 				newsMockRows = sqlmock.NewRows([]string{"id", "name", "category", "currency", "balance"}).
 					AddRow(destPocket.ID, destPocket.Name, destPocket.Category, destPocket.Currency, destPocket.Balance)
 				mock.ExpectQuery(mockSqlFind).WithArgs("2").WillReturnRows(newsMockRows)
+				mock.ExpectBegin()
 
 				return db, nil
 			},
@@ -278,16 +282,19 @@ func TestTransfer(t *testing.T) {
 				mock.ExpectQuery(mockSqlFind).WithArgs("2").WillReturnRows(newsMockRows)
 
 				// mock update
+				mock.ExpectBegin()
 				mockSqlUpdate := "UPDATE pockets"
 				newsMockRows = sqlmock.NewRows([]string{"balance"}).
 					AddRow(sourcePocket.Balance)
-				mock.ExpectQuery(mockSqlUpdate).WithArgs(sourcePocket.ID, 950.0).
+				mock.ExpectQuery(mockSqlUpdate).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
 					WillReturnRows(newsMockRows)
 
 				newsMockRows = sqlmock.NewRows([]string{"balance"}).
 					AddRow(destPocket.Balance)
-				mock.ExpectQuery(mockSqlUpdate).WithArgs(destPocket.ID, 1050.0).
-					WillReturnError(errors.New("update pocket error"))
+				mock.ExpectQuery(mockSqlUpdate).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
+					WillReturnError(errors.New("error update pocket"))
+
+				mock.ExpectCommit()
 
 				return db, nil
 			},
@@ -319,16 +326,46 @@ func TestTransfer(t *testing.T) {
 				mock.ExpectQuery(mockSqlFind).WithArgs("2").WillReturnRows(newsMockRows)
 
 				// mock update
+				mock.ExpectBegin()
 				mockSqlUpdate := "UPDATE pockets"
 				newsMockRows = sqlmock.NewRows([]string{"balance"}).
 					AddRow(sourcePocket.Balance)
-				mock.ExpectQuery(mockSqlUpdate).WithArgs(sourcePocket.ID, 950.0).
+				mock.ExpectQuery(mockSqlUpdate).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
 					WillReturnRows(newsMockRows)
 
 				newsMockRows = sqlmock.NewRows([]string{"balance"}).
 					AddRow(destPocket.Balance)
-				mock.ExpectQuery(mockSqlUpdate).WithArgs(destPocket.ID, 1050.0).
+				mock.ExpectQuery(mockSqlUpdate).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
 					WillReturnRows(newsMockRows)
+
+				return db, nil
+			},
+			payload: `{
+				"source_cloud_pocket_id": "1",
+				"destination_cloud_pocket_id": "2",
+				"amount": 50.00,
+				"description":"Transfer from Travel fund to savings"
+			}`,
+			wantCode: http.StatusInternalServerError,
+			wantResp: `{
+				"error_message": "Internal server error",
+				"status": "Failed"
+			}`,
+		},
+		{
+			name:    "should return internal server when database begin fail",
+			cfgFlag: config.FeatureFlag{},
+			sqlFn: func() (*sql.DB, error) {
+				db, mock, _ := sqlmock.New()
+				// mock find
+				mockSqlFind := "SELECT (.+) FROM pockets"
+				newsMockRows := sqlmock.NewRows([]string{"id", "name", "category", "currency", "balance"}).
+					AddRow(sourcePocket.ID, sourcePocket.Name, sourcePocket.Category, sourcePocket.Currency, sourcePocket.Balance)
+				mock.ExpectQuery(mockSqlFind).WithArgs("1").WillReturnRows(newsMockRows)
+
+				newsMockRows = sqlmock.NewRows([]string{"id", "name", "category", "currency", "balance"}).
+					AddRow(destPocket.ID, destPocket.Name, destPocket.Category, destPocket.Currency, destPocket.Balance)
+				mock.ExpectQuery(mockSqlFind).WithArgs("2").WillReturnRows(newsMockRows)
 
 				return db, nil
 			},

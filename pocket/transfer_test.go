@@ -16,14 +16,14 @@ import (
 )
 
 var (
-	sourcePocket = &pocket{
+	sourcePocket = &Pocket{
 		ID:       1,
 		Name:     "Travel Fund",
 		Category: "Vacation",
 		Currency: "THB",
 		Balance:  1000.0,
 	}
-	destPocket = &pocket{
+	destPocket = &Pocket{
 		ID:       2,
 		Name:     "Savings",
 		Category: "Emergency Fund",

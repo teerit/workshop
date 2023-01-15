@@ -59,13 +59,13 @@ func TestTransferPocketsIt(t *testing.T) {
 	reSrc := regexp.MustCompile(`"source_cloud_pocket_id": \d+`)
 	reDest := regexp.MustCompile(`"destination_cloud_pocket_id": \d+`)
 
-	var srcPocket pocket
+	var srcPocket Pocket
 	body := bytes.NewBufferString(createBody)
 	res := Request(http.MethodPost, Uri("cloud-pockets"), body)
 	err = res.Decode(&srcPocket)
 	trfBody = reSrc.ReplaceAllString(trfBody, fmt.Sprintf(`"source_cloud_pocket_id": "%d"`, srcPocket.ID))
 
-	var dstPocket pocket
+	var dstPocket Pocket
 	body = bytes.NewBufferString(createBody)
 	res = Request(http.MethodPost, Uri("cloud-pockets"), body)
 	err = res.Decode(&dstPocket)

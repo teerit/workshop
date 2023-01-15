@@ -16,15 +16,15 @@ type transferDto struct {
 
 type transferResponse struct {
 	TransactionId          int     `json:"transaction_id"`
-	SourceCloudPocket      *pocket `json:"source_cloud_pocket"`
-	DestinationCloudPocket *pocket `json:"destination_cloud_pocket"`
+	SourceCloudPocket      *Pocket `json:"source_cloud_pocket"`
+	DestinationCloudPocket *Pocket `json:"destination_cloud_pocket"`
 	Status                 string  `json:"status"`
 }
 
 func (h *handler) Transfer(c echo.Context) error {
 	tDto := &transferDto{}
-	sourcePocket := &pocket{}
-	destPocket := &pocket{}
+	sourcePocket := &Pocket{}
+	destPocket := &Pocket{}
 
 	// bind dto
 	err := c.Bind(tDto)
@@ -101,7 +101,7 @@ func (h *handler) Transfer(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
-func findPocket(db *sql.DB, pid string, pk *pocket) error {
+func findPocket(db *sql.DB, pid string, pk *Pocket) error {
 	row := db.QueryRow(
 		"SELECT * FROM pockets where id=$1",
 		pid,
@@ -131,7 +131,7 @@ func insertTransaction(db *sql.DB, tDto *transferDto, status string) (int, error
 	return resultId, err
 }
 
-func updatePocket(db *sql.DB, p *pocket, amount float64) error {
+func updatePocket(db *sql.DB, p *Pocket, amount float64) error {
 	row := db.QueryRow(
 		"UPDATE pockets SET balance=$2 WHERE id=$1 RETURNING balance",
 		p.ID,

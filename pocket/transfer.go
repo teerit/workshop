@@ -25,6 +25,7 @@ func (h *handler) Transfer(c echo.Context) error {
 	tDto := &transferDto{}
 	sourcePocket := &Pocket{}
 	destPocket := &Pocket{}
+	tfService := newTransferService(h.db)
 
 	// bind dto
 	err := c.Bind(tDto)
@@ -53,21 +54,20 @@ func (h *handler) Transfer(c echo.Context) error {
 		})
 	}
 
-	if tDto.Amount > sourcePocket.Balance {
-		_, err := insertTransaction(h.db, tDto, "Failed")
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, errorResp{
-				Status:       "Failed",
-				ErrorMessage: "Internal server error",
-			})
-		}
+	isBalance, err := tfService.balanceCheck(tDto, sourcePocket.Balance)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, errorResp{
+			Status:       "Failed",
+			ErrorMessage: "Internal server error",
+		})
+	}
+	if isBalance {
 		return c.JSON(http.StatusBadRequest, errorResp{
 			Status:       "Failed",
 			ErrorMessage: "Not enough balance in the source cloud pocket",
 		})
 	}
 
-	// update amount source and destination
 	begin, err := h.db.Begin()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, errorResp{
@@ -84,6 +84,7 @@ func (h *handler) Transfer(c echo.Context) error {
 		}
 	}()
 
+	// update amount source and destination
 	err = updatePocket(begin, sourcePocket, sourcePocket.Balance-tDto.Amount)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, errorResp{
